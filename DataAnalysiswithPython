@@ -1,1 +1,644 @@
+Ejercicio 1. Une todos los dataframe desde Enero a Diciembre en un único dataframe. Muestra el shape total del dataframe resultante.
 
+# Importamos pandas
+import pandas as pd
+# Creo una lista vacia para almacenar los dataframes
+dataframes = []
+
+# Uso un bucle para iterar sobre los meses y cargar los dataframes. He borrado el "_detalle" de los nombres de los archivos para sacar más fácil la función f"2022{mes:02d}
+for mes in range(1,13):
+    nombre_archivo = f"2022{mes:02d}.csv"  #Damos el nombre
+    df_mes = pd.read_csv(nombre_archivo, sep=";", encoding="latin1")  
+    #Cargo el dataframe del archivo, he visto que el separador era ; 
+    #utilizo la función de encoding para asegurar que todo es correcto.
+    dataframes.append(df_mes)  # Agrego el dataframe a la lista
+
+# Junto todos los dataframes en uno solo con la función de pandas concat.
+df_multasmadrid = pd.concat(dataframes)
+
+# Para mostrar la forma del dataframe resultante utilizo la función print.
+print("Forma del dataframe resultante:", df_multasmadrid.shape)
+Forma del dataframe resultante: (2702125, 14)
+#Separadores de ejercicios 
+fin_ejercicio = '-' * 127
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 2. Como tal, no vamos a trabajar con datos geográficos, borra las columnas COORDENADA_X y COORDENADA_Y.
+
+df_multasmadrid.columns
+#Saco las columnas del df para comprobar
+Index(['CALIFICACION', 'LUGAR', 'MES', 'ANIO', 'HORA', 'IMP_BOL', 'DESCUENTO',
+       ' PUNTOS', 'DENUNCIANTE', 'HECHO-BOL', 'VEL_LIMITE', 'VEL_CIRCULA ',
+       'COORDENADA-X',
+       'COORDENADA-Y                                                                                                                                '],
+      dtype='object')
+# Se ve que hay varias columnas con espacios, sobre todo coordenada_y que es la que nos interesa. 
+#Elimino espacios en blanco al principio y al final de los nombres de las columnas con la función str.strip()
+df_multasmadrid.columns = df_multasmadrid.columns.str.strip()
+# Las veo para comprobar que ya no hay espacios.
+df_multasmadrid.columns
+Index(['CALIFICACION', 'LUGAR', 'MES', 'ANIO', 'HORA', 'IMP_BOL', 'DESCUENTO',
+       'PUNTOS', 'DENUNCIANTE', 'HECHO-BOL', 'VEL_LIMITE', 'VEL_CIRCULA',
+       'COORDENADA-X', 'COORDENADA-Y'],
+      dtype='object')
+df_multasmadrid = df_multasmadrid.drop(columns=["COORDENADA-X", "COORDENADA-Y"])
+#Borro columnas coordenadas-x y coordenadas-y con la función .drop 
+#Le señalo las columnas que quiero borrar tras comprobar que ya no hay espacios)
+#Muestro las columnas para comprobar
+df_multasmadrid.columns
+Index(['CALIFICACION', 'LUGAR', 'MES', 'ANIO', 'HORA', 'IMP_BOL', 'DESCUENTO',
+       'PUNTOS', 'DENUNCIANTE', 'HECHO-BOL', 'VEL_LIMITE', 'VEL_CIRCULA'],
+      dtype='object')
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 3. Revisa los valores únicos de las variables, hay algunas de ellas que no tienen más de un valor por lo que son constantes, ¿merece la pena tenerlas en el dataframe?
+
+#Aislamos los valores unicos con la función nunique() para poder estudiarlos dentro de valores_unicos
+valores_unicos = df_multasmadrid.nunique()
+print(valores_unicos)
+CALIFICACION         3
+LUGAR           126264
+MES                 12
+ANIO                 1
+HORA              1440
+IMP_BOL             10
+DESCUENTO            2
+PUNTOS               5
+DENUNCIANTE          4
+HECHO-BOL         1867
+VEL_LIMITE          10
+VEL_CIRCULA        133
+dtype: int64
+print ("Las siguientes variables no aportan valor a la estadística:    " , df_multasmadrid.columns[df_multasmadrid.nunique() == 1])
+Las siguientes variables no aportan valor a la estadística:     Index(['ANIO'], dtype='object')
+#Para términos estadísticos, la columna ANIO, no aporta ningún dato clave en este ejercicio
+#ya que todos los archivos pertenecen al año 2022, pero prefiero tenerlo para tener los datos con la máxima exactitud. 
+#Si hubiese mas años, nos convendria tenerlo
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 4. Parece que las columnas VEL_LIMITE y, VEL_CIRCULA tienen valores vacíos, esto se debe a que, si la infracción no se produjo por rebasar ningún límite de velocidad, este valor aparece vacío, cambia todas las anomalías que detectes por nulo (solo en estas dos columnas). Pista: Investiga cómo emplear con regex una expresión regular como r'^\s*$' en la función replace.
+
+#Saco las 8 primeras filas para comprobar como esta estructurado
+print (df_multasmadrid.head(8))
+  CALIFICACION                                     LUGAR  MES  ANIO   HORA  \
+0   LEVE        CL ALONSO CANO 95                           1  2022  17.51   
+1   LEVE        CL CRISTOBAL BORDIU 10                      1  2022  18.00   
+2   GRAVE       CL ALENZA 28                                1  2022  18.46   
+3   LEVE        CL ALONSO CANO 20                           1  2022  19.59   
+4   LEVE        CL ALONSO CANO 84                           1  2022  20.04   
+5   LEVE        CL ALONSO CANO 86                           1  2022  20.06   
+6   LEVE        CL GENERAL GALLEGOS 4                       1  2022  15.01   
+7   LEVE        PZ CASTILLA 9                               1  2022  15.16   
+
+   IMP_BOL DESCUENTO  PUNTOS           DENUNCIANTE  \
+0     90.0        SI       0  SER                    
+1     90.0        SI       0  SER                    
+2    200.0        SI       0  SER                    
+3     90.0        SI       0  SER                    
+4     60.0        SI       0  SER                    
+5     90.0        SI       0  SER                    
+6     30.0        SI       0  SER                    
+7     30.0        SI       0  SER                    
+
+                                           HECHO-BOL VEL_LIMITE VEL_CIRCULA  
+0  ESTACIONAR, SIN LA CORRESPONDIENTE AUTORIZACIÓ...                         
+1  ESTACIONAR EN LUGAR PROHIBIDO.                ...                         
+2  ESTACIONAR OBSTACULIZANDO LA UTILIZACIÓN DE UN...                         
+3  ESTACIONAR, SIN LA CORRESPONDIENTE AUTORIZACIÓ...                         
+4  ESTACIONAR CON AUTORIZACIÓN NO VÁLIDA.        ...                         
+5  ESTACIONAR EN LUGAR PROHIBIDO. VEHÍCULO DE CAT...                         
+6  ESTACIONAR CON AUTORIZACIÓN EN LUGAR HABILITAD...                         
+7  ESTACIONAR VEHÍCULO DE MOVILIDAD PERSONAL EN L...                         
+#Vemos que las columnas que dice el ejercicio en efecto están vacias porque corresponden a estacionamientos.
+# Reemplazo los valores vacíos por NaN en las columnas VEL_LIMITE y VEL_CIRCULA (Todo lo que no sea float, que aparezca Nan). 
+#Utilizo expresiones regulares de cadena para tratar los valores.
+df_multasmadrid['VEL_LIMITE'] = df_multasmadrid['VEL_LIMITE'].replace(r'^\s*$', float('nan'), regex=True)
+df_multasmadrid['VEL_CIRCULA'] = df_multasmadrid['VEL_CIRCULA'].replace(r'^\s*$', float('nan'), regex=True)
+#Vuelvo a sacar 8 primeras filas para comprobar si ahora aparece NaN
+print(df_multasmadrid.head(8))
+                   
+  CALIFICACION                                     LUGAR  MES  ANIO   HORA  \
+0   LEVE        CL ALONSO CANO 95                           1  2022  17.51   
+1   LEVE        CL CRISTOBAL BORDIU 10                      1  2022  18.00   
+2   GRAVE       CL ALENZA 28                                1  2022  18.46   
+3   LEVE        CL ALONSO CANO 20                           1  2022  19.59   
+4   LEVE        CL ALONSO CANO 84                           1  2022  20.04   
+5   LEVE        CL ALONSO CANO 86                           1  2022  20.06   
+6   LEVE        CL GENERAL GALLEGOS 4                       1  2022  15.01   
+7   LEVE        PZ CASTILLA 9                               1  2022  15.16   
+
+   IMP_BOL DESCUENTO  PUNTOS           DENUNCIANTE  \
+0     90.0        SI       0  SER                    
+1     90.0        SI       0  SER                    
+2    200.0        SI       0  SER                    
+3     90.0        SI       0  SER                    
+4     60.0        SI       0  SER                    
+5     90.0        SI       0  SER                    
+6     30.0        SI       0  SER                    
+7     30.0        SI       0  SER                    
+
+                                           HECHO-BOL VEL_LIMITE VEL_CIRCULA  
+0  ESTACIONAR, SIN LA CORRESPONDIENTE AUTORIZACIÓ...        NaN         NaN  
+1  ESTACIONAR EN LUGAR PROHIBIDO.                ...        NaN         NaN  
+2  ESTACIONAR OBSTACULIZANDO LA UTILIZACIÓN DE UN...        NaN         NaN  
+3  ESTACIONAR, SIN LA CORRESPONDIENTE AUTORIZACIÓ...        NaN         NaN  
+4  ESTACIONAR CON AUTORIZACIÓN NO VÁLIDA.        ...        NaN         NaN  
+5  ESTACIONAR EN LUGAR PROHIBIDO. VEHÍCULO DE CAT...        NaN         NaN  
+6  ESTACIONAR CON AUTORIZACIÓN EN LUGAR HABILITAD...        NaN         NaN  
+7  ESTACIONAR VEHÍCULO DE MOVILIDAD PERSONAL EN L...        NaN         NaN  
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 5. Las dos columnas VEL_LIMITE y, VEL_CIRCULA pese a ser dos columnas puramente numéricas, se reconocen como tipo "object", revisa la frecuencia de valores, verás que se cuentan como cadenas de texto, por lo tanto: 5.1 Cambia los nulos de las dos variables por 0 5.2 Cambia el tipo de la variable a numérico 5.3 ¿Cuál es la velocidad límite más repetida distinto de cero?
+
+#Comprobamos que son tipo object
+df_multasmadrid ['VEL_LIMITE']
+0         NaN
+1         NaN
+2         NaN
+3         NaN
+4         NaN
+         ... 
+213990    NaN
+213991    NaN
+213992    NaN
+213993    NaN
+213994    NaN
+Name: VEL_LIMITE, Length: 2702125, dtype: object
+#Aislo variable de la frecuencia y hago la función .value_counts() para sacar todas las velocidades limite.
+frecuencia_vel_limite = df_multasmadrid['VEL_LIMITE'].value_counts()
+
+frecuencia_vel_limite
+ 70    234752
+ 90     82688
+ 50     62096
+ 60     21960
+ 40      4766
+ 30      2172
+ 80      1468
+ 20        64
+040         1
+Name: VEL_LIMITE, dtype: int64
+#Repito el proceso para esta columna, comprobamos el tipo de la columna VEL_CIRCULA
+df_multasmadrid ['VEL_CIRCULA']
+0         NaN
+1         NaN
+2         NaN
+3         NaN
+4         NaN
+         ... 
+213990    NaN
+213991    NaN
+213992    NaN
+213993    NaN
+213994    NaN
+Name: VEL_CIRCULA, Length: 2702125, dtype: object
+#Aislo otra variable para la frecuencia de circulación 
+#Hago la función .value_counts() para sacar todas las velocidades limite.
+frecuencia_vel_circulacion = df_multasmadrid['VEL_CIRCULA'].value_counts()
+frecuencia_vel_circulacion
+ 74    37430
+ 75    32374
+ 76    27287
+ 77    24489
+ 78    17507
+       ...  
+156        4
+158        3
+159        2
+160        1
+050        1
+Name: VEL_CIRCULA, Length: 132, dtype: int64
+5.1 Cambia los nulos de las dos variables por 0
+
+#Cambiamos los nulos por 0 con la funcion fillna
+df_multasmadrid['VEL_LIMITE'] = df_multasmadrid['VEL_LIMITE'].fillna(0)
+df_multasmadrid['VEL_CIRCULA'] = df_multasmadrid['VEL_CIRCULA'].fillna(0)
+#Sacamos las dos columnas para comprobar
+df_multasmadrid['VEL_LIMITE'], df_multasmadrid['VEL_CIRCULA']
+(0         0
+ 1         0
+ 2         0
+ 3         0
+ 4         0
+          ..
+ 213990    0
+ 213991    0
+ 213992    0
+ 213993    0
+ 213994    0
+ Name: VEL_LIMITE, Length: 2702125, dtype: object,
+ 0         0
+ 1         0
+ 2         0
+ 3         0
+ 4         0
+          ..
+ 213990    0
+ 213991    0
+ 213992    0
+ 213993    0
+ 213994    0
+ Name: VEL_CIRCULA, Length: 2702125, dtype: object)
+#Los Nan se han cambiado por 0
+5.2 Cambia el tipo de la variable a numérico
+
+# Cambiar el tipo de las columnas a numérico con la función de pandas pd.to_numeric()
+df_multasmadrid['VEL_LIMITE'] = pd.to_numeric(df_multasmadrid['VEL_LIMITE'])
+df_multasmadrid['VEL_CIRCULA'] = pd.to_numeric(df_multasmadrid['VEL_CIRCULA'])
+print (df_multasmadrid ['VEL_LIMITE'])
+
+print (df_multasmadrid['VEL_CIRCULA'])
+0         0
+1         0
+2         0
+3         0
+4         0
+         ..
+213990    0
+213991    0
+213992    0
+213993    0
+213994    0
+Name: VEL_LIMITE, Length: 2702125, dtype: int64
+0         0
+1         0
+2         0
+3         0
+4         0
+         ..
+213990    0
+213991    0
+213992    0
+213993    0
+213994    0
+Name: VEL_CIRCULA, Length: 2702125, dtype: int64
+#El tipo ha cambiado
+5.3 ¿Cuál es la velocidad límite más repetida distinto de cero?
+
+# Para revisar la velocidad límite más repetida distinta de cero:
+#aislo la variable velocidad limite mas repetida dentro de velocidad_limite_repetida, excluyendo el 0, 
+#y saco la moda con la función mode()
+velocidad_limite_repetida = df_multasmadrid[df_multasmadrid['VEL_LIMITE'] != 0]['VEL_LIMITE'].mode()[0]
+
+print ("La velocidad límite más repetida, sin contar el 0, es", velocidad_limite_repetida, "km/h")
+La velocidad límite más repetida, sin contar el 0, es 70 km/h
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 6. Genera una nueva columna llamada DIFERENCIA_KMH que sea el resultado de restar a cada valor de la velocidad a la que circulaba el conductor la velocidad límite en la que se produce la infracción, obtén un top 10 de los conductores que rebasaron los límites a mayor velocidad y un top 5 a menor velocidad.
+
+#Creo la columna diferencia KMH, que es el resultado de la resta de VEL_CIRCULA y VEL_LIMITE
+df_multasmadrid['DIFERENCIA_KMH'] = df_multasmadrid['VEL_CIRCULA'] - df_multasmadrid['VEL_LIMITE']
+#Compruebo que existen
+df_multasmadrid['DIFERENCIA_KMH']
+
+#Compruebo las columnas
+df_multasmadrid.columns
+Index(['CALIFICACION', 'LUGAR', 'MES', 'ANIO', 'HORA', 'IMP_BOL', 'DESCUENTO',
+       'PUNTOS', 'DENUNCIANTE', 'HECHO-BOL', 'VEL_LIMITE', 'VEL_CIRCULA',
+       'DIFERENCIA_KMH'],
+      dtype='object')
+# Obtener el top 10 de conductores que rebasaron los límites a mayor velocidad, con la función .nlargest()
+top_mayor_velocidad = df_multasmadrid.nlargest(10, 'DIFERENCIA_KMH')
+print( "El top 10 de conductores que más rebasaron los límites de velocidad es el siguiente\n\n", top_mayor_velocidad)
+   
+El top 10 de conductores que más rebasaron los límites de velocidad es el siguiente
+
+        CALIFICACION                                     LUGAR  MES  ANIO  \
+32154    GRAVE       M 30 KM 6,700 C 1                           1  2022   
+4243     GRAVE       M 30 FT KM 0,400 15 CR 4                    2  2022   
+89021    GRAVE       M 30 FT KM 4,150 CR 4                       7  2022   
+8524     GRAVE       M 30 KM 27 CALZADA 2                        3  2022   
+89020    GRAVE       M 30 FT PK 04,150 CR 4                      7  2022   
+2696     GRAVE       CALLE 30 KM 10,300 CR 3                     8  2022   
+4576     GRAVE       M 30 KM 27 CALZADA 2                        9  2022   
+2689     GRAVE       M 30 FT KM 4,150 CARRIL 4                  12  2022   
+32155    GRAVE       M 30 KM 10,300 CR 1                         1  2022   
+166684   GRAVE       M-30 CALZADA 2 KM 27.000                    1  2022   
+
+         HORA  IMP_BOL DESCUENTO  PUNTOS           DENUNCIANTE  \
+32154    6.36    500.0        SI       6  POLICIA MUNICIPAL      
+4243    22.04    500.0        SI       6  POLICIA MUNICIPAL      
+89021   22.00    500.0        SI       6  POLICIA MUNICIPAL      
+8524    12.34    500.0        SI       6  POLICIA MUNICIPAL      
+89020   16.55    500.0        SI       6  POLICIA MUNICIPAL      
+2696    21.27    500.0        SI       6  POLICIA MUNICIPAL      
+4576     6.11    500.0        SI       6  POLICIA MUNICIPAL      
+2689     0.17    500.0        SI       6  POLICIA MUNICIPAL      
+32155    2.06    500.0        SI       6  POLICIA MUNICIPAL      
+166684   1.32    500.0        SI       6  POLICIA MUNICIPAL      
+
+                                                HECHO-BOL  VEL_LIMITE  \
+32154   SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          90   
+4243    SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          70   
+89021   SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          70   
+8524    SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          90   
+89020   SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          70   
+2696    SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          70   
+4576    SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          90   
+2689    SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          70   
+32155   SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          70   
+166684  SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          90   
+
+        VEL_CIRCULA  DIFERENCIA_KMH  
+32154           160              70  
+4243            140              70  
+89021           140              70  
+8524            159              69  
+89020           139              69  
+2696            139              69  
+4576            159              69  
+2689            139              69  
+32155           138              68  
+166684          158              68  
+# Obtener el top 5 de conductores que menos rebasaron los límites con la función .nsmallest ()
+top_menor_velocidad = df_multasmadrid[df_multasmadrid['VEL_LIMITE'] != 0].nsmallest(5, 'DIFERENCIA_KMH')
+
+print( "El top 5 de conductores que menos rebasaron los límites de velocidad es el siguiente\n\n", top_menor_velocidad)
+El top 5 de conductores que menos rebasaron los límites de velocidad es el siguiente
+
+        CALIFICACION                                     LUGAR  MES  ANIO  \
+240077   GRAVE       N013 AV CONCHA ESPINA                       4  2022   
+242227   GRAVE       N175 SERRANO                                4  2022   
+242229   GRAVE       N175 SERRANO                                4  2022   
+242230   GRAVE       N175 SERRANO                                4  2022   
+242232   GRAVE       N175 SERRANO                                4  2022   
+
+         HORA  IMP_BOL DESCUENTO  PUNTOS           DENUNCIANTE  \
+240077  16.17    100.0        SI       0  AGENTES DE MOVILIDAD   
+242227  17.32    100.0        SI       0  AGENTES DE MOVILIDAD   
+242229  17.48    100.0        SI       0  AGENTES DE MOVILIDAD   
+242230  17.49    100.0        SI       0  AGENTES DE MOVILIDAD   
+242232  17.50    100.0        SI       0  AGENTES DE MOVILIDAD   
+
+                                                HECHO-BOL  VEL_LIMITE  \
+240077  SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          50   
+242227  SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          50   
+242229  SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          50   
+242230  SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          50   
+242232  SOBREPASAR LA VELOCIDAD MÁXIMA EN VÍAS LIMITAD...          50   
+
+        VEL_CIRCULA  DIFERENCIA_KMH  
+240077           51               1  
+242227           51               1  
+242229           51               1  
+242230           51               1  
+242232           51               1  
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 7. Obtén un dataframe filtrado por todas las denuncias que hayan acarreado retirada de puntos. Agrupa el dataframe filtrado por el agente público que emite la denuncia, ¿cuál de todos los agentes públicos tiene una mayor media de retirada de puntos?
+
+# Filtro las denuncias que hayan acarreado retirada de puntos con la función .loc() de pandas 
+#indexo la columna especifica de PUNTOS, y las guardo en un nuevo df
+df_retiradapuntos = df_multasmadrid.loc[df_multasmadrid['PUNTOS'] > 0]
+
+df_retiradapuntos
+CALIFICACION	LUGAR	MES	ANIO	HORA	IMP_BOL	DESCUENTO	PUNTOS	DENUNCIANTE	HECHO-BOL	VEL_LIMITE	VEL_CIRCULA	DIFERENCIA_KMH
+2462	GRAVE	AV MEDITERRANEO 32	1	2022	15.33	200.0	SI	4	AGENTES DE MOVILIDAD	REBASAR UN SEMÁFORO EN FASE ROJA. ...	0	0	0
+2465	GRAVE	AV AMERICA - CARTAGENA	1	2022	15.35	200.0	SI	4	AGENTES DE MOVILIDAD	REBASAR UN SEMÁFORO EN FASE ROJA. ...	0	0	0
+2468	GRAVE	FRANCISCO SILVELA 62	1	2022	15.36	200.0	SI	4	AGENTES DE MOVILIDAD	REBASAR UN SEMÁFORO EN FASE ROJA. ...	0	0	0
+2470	GRAVE	CIUDAD BARCELONA - M. PELAYO	1	2022	15.40	200.0	SI	4	AGENTES DE MOVILIDAD	REBASAR UN SEMÁFORO EN FASE ROJA. ...	0	0	0
+2481	GRAVE	VIA LUSITANA - PL ELIPTICA	1	2022	15.43	200.0	SI	4	AGENTES DE MOVILIDAD	REBASAR UN SEMÁFORO EN FASE ROJA. ...	0	0	0
+...	...	...	...	...	...	...	...	...	...	...	...	...	...
+211941	GRAVE	TRAMO A5 Kms 5.7-4 ENTRADA	12	2022	8.52	300.0	SI	2	AGENTES DE MOVILIDAD	SOBREPASAR LA VELOCIDAD MEDIA EN TRAMO CONTROL...	0	0	0
+211971	GRAVE	TRAMO A5 Kms 5.7-4 ENTRADA	12	2022	12.40	300.0	SI	2	AGENTES DE MOVILIDAD	SOBREPASAR LA VELOCIDAD MEDIA EN TRAMO CONTROL...	0	0	0
+212244	GRAVE	TRAMO A5 Kms 4-5.7 SALIDA	12	2022	9.04	300.0	SI	2	AGENTES DE MOVILIDAD	SOBREPASAR LA VELOCIDAD MEDIA EN TRAMO CONTROL...	0	0	0
+213982	GRAVE	TUNEL BAILEN - C S VICENTE	12	2022	16.00	200.0	SI	4	POLICIA MUNICIPAL	REBASAR UN SEMÁFORO EN FASE ROJA. ...	0	0	0
+213992	MUY GRAVE	AV ORCASUR CON CÑALBAICIN	12	2022	13.10	1000.0	SI	6	POLICIA MUNICIPAL	CONDUCIR CON PRESENCIA DE DROGAS EN EL ORGANIS...	0	0	0
+172210 rows × 13 columns
+
+# Dentro de este nuevo df que solo incluye sanciones con puntos,#para agrupar todas  segun el agente público que sanciona,
+#cargamos la columna 'denunciante' de este df y lo guardamos en una nueva variable (agente_medagente_media_retirada_puntos)
+agente_media_retirada_puntos = df_retiradapuntos ['DENUNCIANTE']
+# Value_counts()
+agente_media_retirada_puntos.value_counts()
+AGENTES DE MOVILIDAD    128159
+POLICIA MUNICIPAL        44051
+Name: DENUNCIANTE, dtype: int64
+# Para agrupar por media de puntos por agente público, uso la función groupby('denunciante') y la utilizamos sobre PUNTOS
+agente_media_retirada_puntos = df_retiradapuntos.groupby('DENUNCIANTE')['PUNTOS']
+# Value_counts() para ver cuantas sanciones y de que tipo por cada cuerpo.
+agente_media_retirada_puntos.value_counts()
+DENUNCIANTE           PUNTOS
+AGENTES DE MOVILIDAD  4         124850
+                      3           1520
+                      2            984
+                      6            805
+POLICIA MUNICIPAL     2          19101
+                      4          11646
+                      6           9328
+                      3           3976
+Name: PUNTOS, dtype: int64
+#Para calcular la media de retirada de puntos, le añadimos la función .mean()
+agente_media_retirada_puntos = df_retiradapuntos.groupby('DENUNCIANTE')['PUNTOS'].mean()
+
+#Redondeo a 2 decimales
+round(agente_media_retirada_puntos, 2)
+DENUNCIANTE
+AGENTES DE MOVILIDAD    3.99
+POLICIA MUNICIPAL       3.47
+Name: PUNTOS, dtype: float64
+# Obtener el agente público con la mayor media de retirada de puntos, 
+#creo nueva variable y marco el máximo de la variable anterior
+agente_max_media = agente_media_retirada_puntos.idxmax()
+
+print ("El cuerpo de seguridad que más media de retirada de puntos tiene es:", agente_max_media)
+El cuerpo de seguridad que más media de retirada de puntos tiene es: AGENTES DE MOVILIDAD
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 8. De la columna hora elimina la parte decimal, muestra de forma gráfica en qué horas se han producido más multas.
+
+# Para eliminar la parte decimal de la columna "HORA", la paso a tipo (int)
+df_multasmadrid['HORA'] 
+print (df_multasmadrid['HORA'])
+0         17.51
+1         18.00
+2         18.46
+3         19.59
+4         20.04
+          ...  
+213990    15.50
+213991    12.40
+213992    13.10
+213993    20.59
+213994    14.44
+Name: HORA, Length: 2702125, dtype: float64
+df_multasmadrid['HORA'] = df_multasmadrid['HORA'].astype(int)
+
+print (df_multasmadrid['HORA'])
+0         17
+1         18
+2         18
+3         19
+4         20
+          ..
+213990    15
+213991    12
+213992    13
+213993    20
+213994    14
+Name: HORA, Length: 2702125, dtype: int32
+#Para mostrar de forma gráfica, importamos primero matplotlib
+
+import matplotlib.pyplot as plt
+
+#Sacamos la frecuencia de horas con value_counts() de estas y lo guardamos en la variable frecuencia_horas
+frecuencia_horas = df_multasmadrid['HORA'].value_counts()
+
+# Gráfico de barras de Matplotlib relacionando las horas y el número de sanciones
+plt.bar(frecuencia_horas.index, frecuencia_horas.values)
+
+# Etiquetas y título del gráfico
+plt.xlabel('Hora')
+plt.ylabel('Número de multas')
+plt.title('Distribución de multas por hora')
+
+#Vemos el gráfico:
+plt.show()
+
+#Para verlo aun mejor, importamos seaborn:
+
+import seaborn as sns
+
+#Gráfico de barras utilizando Seaborn:
+
+plt.figure(figsize=(10, 5)) #Definimos tamaño del gráfico
+sns.barplot(x=frecuencia_horas.index, y=frecuencia_horas.values) #Gráfico en barras
+
+plt.title('Distribución de infracciones por hora')
+
+
+# Mostrar el gráfico
+plt.show()
+
+#Otra manera de ver la correlación:
+
+plt.figure(figsize=(2, 1)) #Definimos tamaño del gráfico, un tamaño pequeño porque quiero mostrar más de un gráfico junto
+sns.jointplot(x=frecuencia_horas.index, y=frecuencia_horas.values) #Gráfico en barras
+
+plt.title('Distribución de infracciones por hora', y=1.2) #Modifico altura del titulo sobre el eje y
+
+
+
+# Mostrar el gráfico
+plt.show()
+<Figure size 200x100 with 0 Axes>
+
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 9. Muestra de forma gráfica las multas realizadas durante los meses de 2022. Bien es cierto que en la ciudad de Madrid hay mucho menos tráfico durante los meses de verano comprendidos entre mitad de Junio, Julio, Agosto y una pequeña parte de septiembre ¿Se observa esta afirmación en las visualizaciones?.
+
+# Filtrar los datos por los meses de 2022 (Hago como si pudiera haber más años en el archivo), los guardo dentro de un nuevo df
+df_2022 = df_multasmadrid[df_multasmadrid['ANIO'] == 2022]
+# Contar la frecuencia de infracciones por mes
+frecuencia_meses = df_2022['MES'].value_counts().sort_index()
+
+frecuencia_meses
+1     197805
+2     213907
+3     269611
+4     242415
+5     250700
+6     244934
+7     219819
+8     172264
+9     221503
+10    234922
+11    220250
+12    213995
+Name: MES, dtype: int64
+#Gráfico de barras utilizando Seaborn
+plt.figure(figsize=(6, 4))
+sns.barplot(x=frecuencia_meses.index, y=frecuencia_meses.values)
+
+#Etiquetas y título
+plt.xlabel('Mes')
+plt.ylabel('Número de infracciones')
+plt.title('Distribución de infracciones por mes en 2022')
+cmap='coolwarm'
+
+# Mostrar el gráfico
+plt.show()
+
+# Otro manera de verlo: 
+
+plt.figure(figsize=(4, 2))
+sns.lineplot(x=frecuencia_meses.index, y=frecuencia_meses.values)
+
+#Etiquetas y título
+plt.xlabel('Mes')
+plt.ylabel('Número de infracciones')
+plt.title('Distribución de infracciones por mes en 2022')
+
+
+# Mostrar el gráfico
+plt.show()
+
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+Ejercicio 10. Muestra el número de infracciones de forma gráfica (sin frecuencia acumulada), de cada uno de los agentes públicos en función de la calificación de la infracción
+
+# Agrupamos datos por agente público y calificación, 
+#añado columna 'SANCIONES' para reflejar el número de sanciones que cada cuerpo comete y de que tipo son
+agrupado = df_multasmadrid.groupby(['DENUNCIANTE', 'CALIFICACION']).size().reset_index(name='SANCIONES')
+
+agrupado
+DENUNCIANTE	CALIFICACION	SANCIONES
+0	AGENTES DE MOVILIDAD	GRAVE	858990
+1	AGENTES DE MOVILIDAD	LEVE	202340
+2	AGENTES DE MOVILIDAD	MUY GRAVE	149
+3	POLICIA MUNICIPAL	GRAVE	476624
+4	POLICIA MUNICIPAL	LEVE	135798
+5	POLICIA MUNICIPAL	MUY GRAVE	10005
+6	SACE	GRAVE	14790
+7	SACE	LEVE	3715
+8	SER	GRAVE	33982
+9	SER	LEVE	965732
+#Gráfico de barras agrupadas utilizando Seaborn
+
+plt.figure(figsize=(8, 4))#Empezamos a formular el gráfico, y elijo su tamaño.
+sns.barplot(x='DENUNCIANTE', y='SANCIONES', hue='CALIFICACION', data=agrupado, palette='coolwarm')
+#Quiero un gráfico de barras que refleje la  relación entre denunciante y nº desanciones para cada tipo de calificación 
+
+#Etiquetas y título
+plt.xlabel('Agente Público')
+plt.ylabel('Número de infracciones')
+plt.title('Número de infracciones por agente público y calificación')
+
+
+
+# Mostrar el gráfico
+plt.show()
+
+#Como se solapan los nombres de los agentes, encuentro la funcion plt.xticks (rotation=  ) para 
+#rotar las etiquetas del eje x y conseguir una mejor legibilidad
+
+plt.figure(figsize=(8, 4))
+sns.barplot(x='DENUNCIANTE', y='SANCIONES', hue='CALIFICACION', data=agrupado, palette='coolwarm') 
+
+plt.xlabel('Agente Público')
+plt.ylabel('Número de infracciones')
+plt.title('Número de infracciones por agente público y calificación')
+
+plt.xticks(rotation=90)
+
+plt.show()
+
+fin_practica = '*' * 300 + ' FIN DE LA PRÁCTICA FINAL ' + '*' * 200
+
+print (fin_ejercicio)
+-------------------------------------------------------------------------------------------------------------------------------
+RESUMEN
+Las sanciones en Madrid durante el año pasado nos mostraron los siguientes hechos
+- Durante 2022 se pusieron 2702124 multas. La gran mayoria sin conllevar puntos.
+- Las horas en las que mas multas se ponen son las comprendidas entre las 09 y las 13, y cuando menos se ponen es de madrugada.
+- Los meses donde más multas se pusieron fueron Marzo y Mayo, y los que menos Julio y Agosto.
+- Solo sancionan quitando puntos al carnet de conducir los cuerpos de Agentes de Movilidad y de Policia Municipal.
+- Los Agentes de Movilidad son los que más multas ponen (y también los que más puntos quitan), les siguen en cantidad de multas, por orden: SER, Policia Municipal y SACE.
+- El cuerpo Policia Municipal es el único que pone sanciones MUY GRAVES, y pone muchas más sanciones GRAVES que LEVES.
+- SACE no tiene apenas sanciones, y casi todas suelen ser de caracter GRAVE.
+- La gran mayoría de multas que pone SER son multas leves, lo cual también tiene sentido porque multan por estacionamientos.
+CONCLUSIÓN
+El análisis muestra resultados lógicos como la frecuencia de horas donde hay muchas menos de madrugada, o en la frecuencia por meses que ocurre lo mismo en verano. 2.702.124 multas es una cantidad considerable, teniendo en cuenta el número de habitantes de Madrid ciudad. Sería interesante poder analizar el origen de los coches, para poder hacer una relación entre la cantidad de habitantes multados que viven fuera de Madrid y la cantidad de multados que viven en la ciudad. Relacionando esto con la frecuencia de horas y de meses, el Ayuntamiento de Madrid podría analizar aspectos interesantes como la cantidad de multas a turistas o cuantas multas reciben ciudadanos de fuera de Madrid en Madrid en horario de trabajo y cuanto se recauda.
+
+print (fin_practica)
+************************************************************************************************************************************************************************************************************************************************************************************************************ FIN DE LA PRÁCTICA FINAL ********************************************************************************************************************************************************************************************************
